@@ -8,6 +8,9 @@
 #include <cmath>
 #include <limits>
 
+// i think i want to do a header file that contains my reading in code or something
+// there is probably a smart way to keep everything organized
+
 class BITSTAR{
     public:
     private:
@@ -58,7 +61,7 @@ class BITSTAR{
             }
         };
 
-        // i fuck fuck fucking love typedef
+        // i love typedef
         typedef std::priority_queue<state, std::vector<state>, vertexQueueSort> vertexQueueType;             // 3.0
         typedef std::priority_queue<edge, std::vector<edge>, edgeQueueSort> edgeQueueType;                 // 3.1
         typedef std::vector<edge> edgeVector;
