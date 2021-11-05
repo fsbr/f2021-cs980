@@ -228,7 +228,7 @@ int main () {
         
     std::cout << "did the test work ? : " << test_works << std::endl;
     if (test_works) {
-        BS.BIT_STAR({-10.0f, 1.0f}, {1.0f, 1.0f});
+        BS.BIT_STAR({1.1, 3.0f}, {9.0f, 9.0f});
     };
 
     // unit testing my stuff
