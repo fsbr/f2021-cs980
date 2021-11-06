@@ -92,7 +92,7 @@ class BITSTAR{
             stateVector Vsoln;                                                              // 4.0
             Vsoln.push_back(goal);                                                          // 4.0 
             std::vector<state> Vunexpnd;                                                    // 4.1
-            Vunexpnd.push_back(goal);                                                       // 4.1 
+            Vunexpnd.push_back(start);                                                       // 4.1 
             std::vector<state> Xnew;                                                        // 4.2
             Xnew.push_back(goal);                                                           // 4.2 this maybe only working because the goal right now is a single point.
 
@@ -122,8 +122,12 @@ class BITSTAR{
             std::cout << "were expanding next vertex " << ci << std::endl;
             state Vmin = sV_PopBestInQueue(Qv);                                                 // A2.1
             //if Vmin in Vunexpanded 
-            if (b_VertexIsIn(Vmin, Vunexpnd)) std::cout << "vertex is IN!" << std::endl;
-            std::cout << "size of the queue in ExpandNextVertex" << Qv.size() << std::endl;
+            if (b_VertexIsIn(Vmin, Vunexpnd)) {                                                 // A2.2
+                std::cout << "vertex is IN!" << std::endl;
+            }
+            else {                                                                              // A2.4
+                std::cout << "vertex is OUT!" << std::endl;
+            }
         }; 
         float fV_BestQueueValue(vertexQueueType& Qv) {              
             if (Qv.size() == 0) return INFINITY;
