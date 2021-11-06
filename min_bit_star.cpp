@@ -6,7 +6,6 @@
 #include <string>
 #include <queue>
 #include <cmath>
-#include <limits>
 
 // i think i want to do a header file that contains my reading in code or something
 // there is probably a smart way to keep everything organized
@@ -145,14 +144,25 @@ class BITSTAR{
         bool b_VertexIsIn(state& V, stateVector& vectorSet){
             // input: a state vertex and an associate set
             // output: return true if the state vector contains that thing, else false
+            bool verticesAreEqual;
             for (auto &r : vectorSet) {
                 std::cout << "trying this" << std::endl;
+                verticesAreEqual = b_VerticesAreEqual(r, V);
+                if (verticesAreEqual) {
+                    std::cout << "set membership is shown" << std::endl;
+                    return verticesAreEqual;
+                };
             };
-            return true; 
+            return false; 
         };
         bool b_VerticesAreEqual(const state& V1, const state& V2) {
             // input is two states: output is whether or not every member of their structure is equal
-            return true; 
+            bool verticesAreEqual = ((V1.x == V2.x) && 
+                                    (V1.y == V2.y) &&
+                                    (V1.f == V2.f) &&
+                                    (V1.gT == V2.gT) &&
+                                    (V1.hhat == V2.hhat));
+            return verticesAreEqual; 
         };
         // I should write simple test functions as I go along
         void print_state_vector(std::vector<state> state_vector, std::string vector_name) {
@@ -165,6 +175,16 @@ class BITSTAR{
         };
 
     // UNIT TESTS OF EACH PART 
+    bool bTest_b_VerticesAreEqual() {
+        state V1, V2;  
+        V1.x = 1.0f; V2.x = 1.0f; 
+        V1.y = 0.0f; V2.y = 0.0f; 
+        V1.f = 3.14f; V2.f = 3.14;  
+        V1.gT = INFINITY; V2.gT = INFINITY; 
+        V1.hhat = INFINITY; V2.hhat = INFINITY;
+        bool areEqual = b_VerticesAreEqual(V1, V2);
+        return areEqual;
+    };
     bool bTest_fV_BestQueueValue() {              
         float upperValue = 10.0f; 
         float middleValue = 9.0f;
@@ -213,7 +233,8 @@ class BITSTAR{
     bool unit_test() {
         bool bqvv_works = bTest_fV_BestQueueValue();
         bool bqve_works = bTest_fE_BestQueueValue();
-        return bqvv_works && bqve_works;
+        bool bvae_works = bTest_b_VerticesAreEqual();
+        return bqvv_works && bqve_works && bvae_works;
     };
 
 //// BIT STARS ENDING BRACE DO NOT TOUCH
