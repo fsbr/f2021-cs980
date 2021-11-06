@@ -16,8 +16,8 @@ class BITSTAR{
         // putting debugging utilities in the "private" part of the class structure
     public:
         // major params for BIT* 
-        int kBit_star = 10; 
-        float rBit_start = 3.0f;
+        int kBitStar = 10; 
+        float rBitStar = 3.0f;
         // all our math helper functions going to go at the top
         float calculate_L2(float x1, float y1, float x2, float y2){
             float L_2 = sqrt( pow((x2-x1),2) + pow((y2-y1),2) ); 
@@ -25,12 +25,12 @@ class BITSTAR{
         };
         // all of our data structures for the BIT* implementation go here.
         struct state { // i guess i just add more members there if i need it
-            float x;
-            float y;
-            float f;
+            float x = INFINITY;                 // valgrind didnt like when i didn't initialize stuff
+            float y = INFINITY;
+            float f = INFINITY;
             float gT = INFINITY;
             float hhat = INFINITY;
-            float r;                // distance for nearest neighbor search 
+            float r = INFINITY;                // distance for nearest neighbor search 
             // associated heuristic information goes here?
         };
         struct edge {
@@ -82,7 +82,7 @@ class BITSTAR{
             start.gT = 0.0f; 
             start.hhat = fCalculateDist(start,goal);
             start.f = start.gT + start.hhat;                            // do i need this every time?`
-            std::cout << "start.f: " << start.f << std::endl;
+            //std::cout << "start.f: " << start.f << std::endl;
 
             // preprocessing for the goal state
             goal.hhat = 0.0f;
@@ -119,7 +119,7 @@ class BITSTAR{
                 while  ((Qv.size() > 0) &  (fV_BestQueueValue(Qv) <= fE_BestQueueValue(Qe)) ){   // 13.0
                 //  on the first iteration, i shoudl be in here, since the vertex queue is empty
                     // EXPAND NEXT VERTEX
-                    ExpandNextVertex(Qv, Qe, ci, Vunexpnd);                                               //  14.0
+                    ExpandNextVertex(Qv, Qe, ci, Vunexpnd, Xunconn);                                               //  14.0
                     std::cout << "BEST VERTEX VALUE " << fV_BestQueueValue(Qv);
                     std::cout << " BEST EDGE VALUE " << fE_BestQueueValue(Qe) << std::endl;
                     std::cout << "  Vertex Queue Size " << Qv.size();
@@ -130,18 +130,36 @@ class BITSTAR{
         }; // MAIN BIT_STAR END
 
         // EXPAND NEXT VERTEX (Algorithm 2)
-        void ExpandNextVertex(vertexQueueType& Qv, edgeQueueType& Qe, float& ci, stateVector& Vunexpnd){
-            std::cout << "were expanding next vertex " << ci << std::endl;
+        void ExpandNextVertex(vertexQueueType& Qv, edgeQueueType& Qe, 
+                              float& ci, stateVector& Vunexpnd, stateVector& Xunconn){
+            std::cout << "Expanding next vertex. Cost = " << ci << std::endl;
+            stateVector Xnear, XnearAndUnconnected; 
             state Vmin = sV_PopBestInQueue(Qv);                                                 // A2.1
             //if Vmin in Vunexpanded 
             if (b_VertexIsIn(Vmin, Vunexpnd)) {                                                 // A2.2
                 std::cout << "vertex is IN!" << std::endl;
+                Xnear = Near(Xunconn, Vmin, rBitStar, kBitStar);                                // A2.3
+                std::cout << "X near: " << Xnear.size(); 
             }
             else {                                                                              // A2.4
                 std::cout << "vertex is OUT!" << std::endl;
+                // scary since i wont be able to test this right away
+                XnearAndUnconnected = SetIntersection(Xnear, Xunconn);                          // A2.5
+                Xnear = Near(XnearAndUnconnected, Vmin, rBitStar, kBitStar);                    // A2.5
             }
+            // 
         }; 
 
+        stateVector SetIntersection(stateVector set1, stateVector set2) {
+            // inputs: takes two state vectors and outputs the common states
+            // this is O(n x m), but idk how to do it faster
+            // yi suggested a hash table, but I'm just going to use this for now.
+            stateVector commonStates; 
+            for (auto &i : set1) {
+                    if (b_VertexIsIn(i, set2)) commonStates.push_back(i); 
+            }; 
+            return commonStates;
+        };
         stateVector Near(stateVector StatesToCheck, state vertexToCheck,  float rggRadius, int numberOfNeighbors) {
             // I need to pick the RGG radius or the KNN
             // inputs:  statevector: to be searched
@@ -185,15 +203,16 @@ class BITSTAR{
             Qv.pop();
             return Top;
         };
-        bool b_VertexIsIn(state& V, stateVector& vectorSet){
+
+        bool b_VertexIsIn(state V, stateVector vectorSet){ // i have it with reference, but since its retunring i think its safe to not do that
             // input: a state vertex and an associate set
             // output: return true if the state vector contains that thing, else false
             bool verticesAreEqual;
             for (auto &r : vectorSet) {
-                std::cout << "trying this" << std::endl;
+                //std::cout << "trying this" << std::endl;
                 verticesAreEqual = b_VerticesAreEqual(r, V);
                 if (verticesAreEqual) {
-                    std::cout << "set membership is shown" << std::endl;
+                    //std::cout << "set membership is shown" << std::endl;
                     return verticesAreEqual;
                 };
             };
@@ -302,14 +321,38 @@ class BITSTAR{
 
         return false;
     };
+    bool bTest_SetIntersection(){
+        // if s8 and s1 are apparently added to commonStates, we succeed
+        stateVector commonStates;
+        stateVector set1, set2;   
+        state s1, s2, s3, s4, s5, s6, s7, s8; 
+        s1.x = 1.0f; s1.y = 1.0f;
+        s2.x = 2.0f; s2.y = 2.0f;
+        s3.x = 3.0f; s3.y = 3.0f;
+        s4.x = 4.0f; s4.y = 4.0f;
+        s5.x = 5.0f; s5.y = 5.0f;
+        s6.x = 6.0f; s6.y = 6.0f;
+        s7.x = 7.0f; s7.y = 7.0f;
+        s8.x = 8.0f; s8.y = 8.0f;
+        set1.push_back(s8); set2.push_back(s8);
+        set1.push_back(s1); set2.push_back(s2); 
+        set1.push_back(s3); set2.push_back(s4); 
+        set1.push_back(s5); set2.push_back(s6); 
+        set1.push_back(s7); set2.push_back(s1); 
+        commonStates = SetIntersection(set1, set2);
+        if (commonStates.size() == 2) return true;
+        return false;
+    };
+
     bool unit_test() {
         bool bqvv_works = bTest_fV_BestQueueValue();
         bool bqve_works = bTest_fE_BestQueueValue();
         bool bvae_works = bTest_b_VerticesAreEqual();
         bool near_works = bTest_Near();
-        return bqvv_works && bqve_works && bvae_works && near_works;
+        bool sint_works = bTest_SetIntersection();
+        return bqvv_works && bqve_works && 
+               bvae_works && near_works && sint_works;
     };
-
 //// BIT STARS ENDING BRACE DO NOT TOUCH
 };///DONT TOUCH
 //// DONTTTT TOUCH
@@ -324,7 +367,7 @@ int main () {
     test_works = BS.unit_test(); 
         
     std::cout << std::endl;
-    std::cout << "TEST WORKED OR DIDNT " << test_works << std::endl;
+    std::cout << "TEST WORKED IF 1 == " << test_works << std::endl;
     std::cout << std::endl;
     if (test_works) {
         BS.BIT_STAR({1.1, 3.0f}, {9.0f, 9.0f});
