@@ -15,6 +15,9 @@ class BITSTAR{
     private:
         // putting debugging utilities in the "private" part of the class structure
     public:
+        // major params for BIT* 
+        int kBit_star = 10; 
+        float rBit_start = 3.0f;
         // all our math helper functions going to go at the top
         float calculate_L2(float x1, float y1, float x2, float y2){
             float L_2 = sqrt( pow((x2-x1),2) + pow((y2-y1),2) ); 
@@ -27,6 +30,7 @@ class BITSTAR{
             float f;
             float gT = INFINITY;
             float hhat = INFINITY;
+            float r;                // distance for nearest neighbor search 
             // associated heuristic information goes here?
         };
         struct edge {
@@ -36,12 +40,12 @@ class BITSTAR{
             float chat;
         };
 
-        float fCalculateHhat(state v, state goal){
+        float fCalculateDist(state v, state goal){
             float xv, yv, xg, yg;                       // idk why but this feels smart? but also dumb
             xv = v.x; yv = v.y;
             xg = goal.x; yg = goal.y;
-            float hhat = calculate_L2(xv,yv,xg,yg);
-            return hhat;
+            float dist = calculate_L2(xv,yv,xg,yg);
+            return dist;
         };
         //struct tree {                 
         //    std::vector<state> V;
@@ -49,6 +53,11 @@ class BITSTAR{
         //};
 
         // priority functions for the vertex queue
+        struct neighborQueueSort {
+            bool operator() (state const& s1, state const& s2){
+                return s1.r > s2.r;                                             // this ordering produces a min queue, which is what I need
+            }
+        };
         struct vertexQueueSort {
             bool operator() (state const& s1, state const& s2){
                 return s1.f > s2.f;                                             // this ordering produces a min queue, which is what I need
@@ -62,6 +71,7 @@ class BITSTAR{
 
         // i love typedef
         typedef std::priority_queue<state, std::vector<state>, vertexQueueSort> vertexQueueType;             // 3.0
+        typedef std::priority_queue<state, std::vector<state>, neighborQueueSort> neighborQueueType;             // 3.0
         typedef std::priority_queue<edge, std::vector<edge>, edgeQueueSort> edgeQueueType;                 // 3.1
         typedef std::vector<edge> edgeVector;
         typedef std::vector<state> stateVector;
@@ -70,7 +80,7 @@ class BITSTAR{
         void BIT_STAR(state start, state goal){
             // preprocessing the start vertex
             start.gT = 0.0f; 
-            start.hhat = fCalculateHhat(start,goal);
+            start.hhat = fCalculateDist(start,goal);
             start.f = start.gT + start.hhat;                            // do i need this every time?`
             std::cout << "start.f: " << start.f << std::endl;
 
@@ -118,6 +128,8 @@ class BITSTAR{
             };//UNTIL STOP;
             // RETURN T;
         }; // MAIN BIT_STAR END
+
+        // EXPAND NEXT VERTEX (Algorithm 2)
         void ExpandNextVertex(vertexQueueType& Qv, edgeQueueType& Qe, float& ci, stateVector& Vunexpnd){
             std::cout << "were expanding next vertex " << ci << std::endl;
             state Vmin = sV_PopBestInQueue(Qv);                                                 // A2.1
@@ -129,6 +141,34 @@ class BITSTAR{
                 std::cout << "vertex is OUT!" << std::endl;
             }
         }; 
+
+        stateVector Near(stateVector StatesToCheck, state vertexToCheck,  float rggRadius, int numberOfNeighbors) {
+            // I need to pick the RGG radius or the KNN
+            // inputs:  statevector: to be searched
+            //          state: measuring nearness from this point
+            //          float: a radius to say yes this is within my rgg radius
+            //          int: the number of nearest states 
+            //  outputs: the list of numberOfNeighbors nearest states
+            // i'm just praying that the subset of "states to check" doesn't bog down the alg.
+            stateVector NearestNeighbors;
+            neighborQueueType NeighborQueue;                                // sort on insertion     
+            int neighborCounter = 0;
+            for (auto &i : StatesToCheck) {
+                i.r = fCalculateDist(i, vertexToCheck);                 // i = thing i'm iterating
+                NeighborQueue.push(i);
+            };
+
+            // when things get put on the neighbor queue they are already sorted, so 
+            // i THINK (this may not be happening), that its safe to increment the neighbor counter every time
+            while (!NeighborQueue.empty() && neighborCounter < numberOfNeighbors) {
+                state TopState = NeighborQueue.top();
+                NeighborQueue.pop();
+                if (TopState.r < rggRadius) NearestNeighbors.push_back(TopState);
+                neighborCounter++;
+            };
+            return NearestNeighbors;
+        }; // Near
+
         float fV_BestQueueValue(vertexQueueType& Qv) {              
             if (Qv.size() == 0) return INFINITY;
             return Qv.top().f;
@@ -234,11 +274,40 @@ class BITSTAR{
         return false;
     };
 
+    bool bTest_Near() {
+        stateVector NeighborsCheck; 
+        stateVector StatesToCheck; 
+        state vertexToCheck;
+        float rggRadius = 3.0f;
+        int numberOfNeighbors = 2; 
+        // i'll test 3 states, and see if just two appear in the neighbor list
+        state s0, s1, s2, s3, s4, s5;
+        s0.x = 0.0f; s0.y = 0.0f;
+        s1.x = 1.0; s1.y = 1.0; 
+        s2.x = -1.5; s2.y = -1.5; 
+        s3.x = 3.0; s3.y = 3.0;
+        s4.x = -1.6; s4.y = 1.6;
+        s5.x = -1.0; s5.y = 1.0;
+        StatesToCheck.push_back(s5); 
+        StatesToCheck.push_back(s1);StatesToCheck.push_back(s4);  StatesToCheck.push_back(s3); StatesToCheck.push_back(s2);
+        NeighborsCheck = Near(StatesToCheck, s0, rggRadius, numberOfNeighbors); 
+        std::cout << NeighborsCheck.size() << std::endl; 
+        std::cout << "X | Y | r " << std::endl;
+
+        for (auto &i : NeighborsCheck) {
+            std::cout << i.x << " | " << i.y << " | " << i.r << std::endl;
+        };
+        if (NeighborsCheck.size() == 2) return true;            // not a perfect check but better than nothing
+        
+
+        return false;
+    };
     bool unit_test() {
         bool bqvv_works = bTest_fV_BestQueueValue();
         bool bqve_works = bTest_fE_BestQueueValue();
         bool bvae_works = bTest_b_VerticesAreEqual();
-        return bqvv_works && bqve_works && bvae_works;
+        bool near_works = bTest_Near();
+        return bqvv_works && bqve_works && bvae_works && near_works;
     };
 
 //// BIT STARS ENDING BRACE DO NOT TOUCH
@@ -254,7 +323,9 @@ int main () {
     bool test_works;
     test_works = BS.unit_test(); 
         
-    std::cout << "did the test work ? : " << test_works << std::endl;
+    std::cout << std::endl;
+    std::cout << "TEST WORKED OR DIDNT " << test_works << std::endl;
+    std::cout << std::endl;
     if (test_works) {
         BS.BIT_STAR({1.1, 3.0f}, {9.0f, 9.0f});
     };
