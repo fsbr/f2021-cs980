@@ -37,7 +37,7 @@ class BITSTAR{
         struct edge {
             state source_state;
             state target_state; 
-            float f = 0.13131;
+            float f = INFINITY;
             float cHat;
         };
 
@@ -124,6 +124,9 @@ class BITSTAR{
                     std::cout << " || || | ||" << std::endl;
                     std::cout << "\tBEST VERTEX VALUE " << fV_BestQueueValue(Qv);
                     std::cout << "\tBEST EDGE VALUE " << fE_BestQueueValue(Qe) << std::endl;
+                    std::cout << "\tNUMBER OF VERTICES IN V " << V.size()<< std::endl;
+                    std::cout << "\tNUMBER OF EDGES IN E " << E.size() << std::endl;
+
                     std::cout << "\tVertex Queue Size " << Qv.size() << std::endl;
                     std::cout << "\tEDGE Queue Size " << Qe.size() << std::endl;
                     std::cout << "\tVunexpnd Size " << Vunexpnd.size() << std::endl;  
@@ -168,6 +171,7 @@ class BITSTAR{
                 if (gHat + cHat + hHat < ci) {                                                  // A2.6
                     edge EdgeToPush;                                                            // A2.6
                     EdgeToPush.source_state = Vmin; EdgeToPush.target_state = i;                // A2.6
+                    //EdgeToPush.f = gHat + cHat + hHat;
                     EdgeToPush.cHat = cHat;
                     Qe.push(EdgeToPush);                                                        // A2.6
                 };
@@ -185,9 +189,10 @@ class BITSTAR{
                     edge EdgeToPush;                                                            // 
                     EdgeToPush.source_state = Vmin; EdgeToPush.target_state = i;                // 
                     if (gHat + cHat + hHat < ci && !b_EdgeIsIn(EdgeToPush, E)) {                // A2.9
+                        EdgeToPush.f = gHat + cHat + hHat;
                         EdgeToPush.cHat = cHat; 
                         Qe.push(EdgeToPush);
-                        std::cout << "did i push the edge?" << std::endl;
+                        std::cout << "Edge Should be Enqueued" << std::endl;
                     }; 
                 }// A2.9 for loop
             };
@@ -301,7 +306,7 @@ class BITSTAR{
             int stateIdx = 0;
             for (auto &i : VectorList) {
                 // asdfadsf
-                std::cout << "idk what im doing" << std::endl;
+                std::cout << "in removeStateFromSet" << std::endl;
                 if (b_VerticesAreEqual(i, Vertex)){
                     VectorList.erase(VectorList.begin() + stateIdx);
                     return true;    // so we are hoping that multiple copies dont get in here
@@ -320,6 +325,28 @@ class BITSTAR{
             };
         };
 
+    float calculateGT(state& stateOfInterest, state& start, stateVector& V, edgeVector& E) {
+        // inputs: state: a state you want to find the cost to get to it given the current tree
+        //         edgeVector: a list of all the edges in the current motion tree
+        //         stateVector: a list of the states in the current motion tree
+        // effects: this function attempts to search the motion tree until the root is reached, 
+        // page 111 of notebook 2 shows the tree that this wokrs on.
+        float gT = 0.0f; 
+        // this is hard for me to visualize, how to instruct the computer what to do. 
+        state tmpSourceState;
+        while (!b_VerticesAreEqual(stateOfInterest, start)){         // hopefully stops my tree traversal when i hit the start state
+            std::cout << "im in the while loops stuck for good" << std::endl;
+            for (auto &i : E) {
+                if(b_VerticesAreEqual(stateOfInterest, i.target_state)){
+                    gT +=i.cHat;                                    // i think this works since states in the motion tree have non infinite costs
+                    std::cout << "gT value: " << gT << std::endl;  // it never looks 
+                    stateOfInterest = i.source_state;
+                }; 
+            };
+        }
+        return gT;
+    
+    };
     // UNIT TESTS OF EACH PART 
     bool bTest_b_VerticesAreEqual() {
         state V1, V2;  
@@ -466,10 +493,36 @@ class BITSTAR{
         stateList.push_back(s1); stateList.push_back(s2); 
         stateList.push_back(s3); stateList.push_back(s4); 
         removeStateFromSet(s4, stateList); 
-        print_state_vector(stateList, "asdf");
+        print_state_vector(stateList, "stateList");
         // read the printout to make sure
         if (stateList.size() == 3 && stateList[2].x == 3.0) return true;
         return false;
+    };
+
+    bool bTest_calculateGT() {
+        // i kind of need gT to be calculated for a functioning algorithm
+        edge E0, E1, E2, E3, E4, E5;
+        state start, s1, s2, s3, s4, s5;
+        stateVector V; edgeVector E;
+        start.x = 0.0f; start.y = 0.0f;
+        s1.x = 1.0f; s1.y = 1.0;
+        s2.x = 1.0f; s2.y = 2.0;
+        s3.x = 3.0f; s3.y = 3.0;
+        s4.x = 4.0f; s4.y = 4.0;
+        s5.x = 5.0f; s5.y = 5.0; 
+        E0.source_state = start; E0.target_state = s1;   E0.cHat = 4.0f;
+        E1.source_state = s1; E1.target_state = s2;      E1.cHat = 3.0f; 
+        E2.source_state = s1; E2.target_state = s3;      E2.cHat = 2.0f;
+        E3.source_state = s3; E3.target_state = s4;      E3.cHat = 5.0f;
+        E4.source_state = s3; E4.target_state = s5;      E4.cHat = 7.0f; 
+        V.push_back(start);
+        V.push_back(s1); V.push_back(s2); V.push_back(s3); V.push_back(s4); V.push_back(s5);
+        E.push_back(E0); E.push_back(E1); E.push_back(E2); E.push_back(E3); E.push_back(E4);
+        float costGivenCurrentTree = calculateGT(s5, start, V, E);
+        std::cout<< "Cost Given Current test tree" << costGivenCurrentTree << std::endl; 
+        if (costGivenCurrentTree == 13.0f) return true;
+        return false;
+
     };
 
     bool unit_test() {
@@ -480,6 +533,7 @@ class BITSTAR{
         bool sint_works = bTest_SetIntersection();
         bool edge_equal_works = bTest_b_EdgesAreEqual();
         bool state_V_removal_works = bTest_removeStateFromSet();
+        bool tree_traversal_works = bTest_calculateGT();
 
         std::cout << std::endl;
         std::cout << "UNIT TEST RESULTS: " << std::endl;
@@ -491,10 +545,12 @@ class BITSTAR{
         std::cout << "\tSet Intersection / Vertex Membership: " << sint_works << std::endl;
         std::cout << "\tEdge Equality: " << edge_equal_works << std::endl;
         std::cout << "\tState Removal From V Vector: " << state_V_removal_works << std::endl;
+        std::cout << "\tTree Traversal Works: " << tree_traversal_works << std::endl;
         
         return bqvv_works && bqve_works && 
                bvae_works && near_works && sint_works && 
-               edge_equal_works && state_V_removal_works;
+               edge_equal_works && state_V_removal_works &&
+               tree_traversal_works;
     };
 //// BIT STARS ENDING BRACE DO NOT TOUCH
 };///DONT TOUCH
