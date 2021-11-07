@@ -29,7 +29,8 @@ class BITSTAR{
             float y = INFINITY;
             float f = INFINITY;
             float gT = INFINITY;
-            float hhat = INFINITY;
+            float hHat = INFINITY;
+            float gHat = INFINITY;              // structure equality just checks a subset of these
             float r = INFINITY;                // distance for nearest neighbor search 
             // associated heuristic information goes here?
         };
@@ -37,7 +38,7 @@ class BITSTAR{
             state source_state;
             state target_state; 
             float f = 0.13131;
-            float chat;
+            float cHat;
         };
 
         float fCalculateDist(state v, state goal){
@@ -80,12 +81,12 @@ class BITSTAR{
         void BIT_STAR(state start, state goal){
             // preprocessing the start vertex
             start.gT = 0.0f; 
-            start.hhat = fCalculateDist(start,goal);
-            start.f = start.gT + start.hhat;                            // do i need this every time?`
+            start.hHat = fCalculateDist(start,goal);
+            start.f = start.gT + start.hHat;                            // do i need this every time?`
             //std::cout << "start.f: " << start.f << std::endl;
 
             // preprocessing for the goal state
-            goal.hhat = 0.0f;
+            goal.hHat = 0.0f;
 
             // algorithm begins as in the paper
             stateVector V;                                                                  // 1.0 
@@ -119,24 +120,33 @@ class BITSTAR{
                 while  ((Qv.size() > 0) &  (fV_BestQueueValue(Qv) <= fE_BestQueueValue(Qe)) ){   // 13.0
                 //  on the first iteration, i shoudl be in here, since the vertex queue is empty
                     // EXPAND NEXT VERTEX
-                    ExpandNextVertex(Qv, Qe, ci, Vunexpnd, Xunconn);                                               //  14.0
+                    ExpandNextVertex(Qv, Qe, ci, Vunexpnd, Xunconn, start, goal,V);                                               //  14.0
                     std::cout << "BEST VERTEX VALUE " << fV_BestQueueValue(Qv);
                     std::cout << " BEST EDGE VALUE " << fE_BestQueueValue(Qe) << std::endl;
                     std::cout << "  Vertex Queue Size " << Qv.size();
                     std::cout << "  EDGE Queue Size " << Qe.size();
                 };
+                //std::cout << "diagnostic message to let you know i am stuck in this while loop" <<std::endl;
+                //std::cout << " how big is my edge queue " << Qe.size() << std::endl;
             };//UNTIL STOP;
             // RETURN T;
         }; // MAIN BIT_STAR END
 
         // EXPAND NEXT VERTEX (Algorithm 2)
         void ExpandNextVertex(vertexQueueType& Qv, edgeQueueType& Qe, 
-                              float& ci, stateVector& Vunexpnd, stateVector& Xunconn){
+                              float& ci, stateVector& Vunexpnd, stateVector& Xunconn,
+                              state& start, state& goal, stateVector V){                                       // there has to be a cleaner way
             std::cout << "Expanding next vertex. Cost = " << ci << std::endl;
-            stateVector Xnear, XnearAndUnconnected; 
+            stateVector Xnear, XnearAndUnconnected, Vnear; 
             state Vmin = sV_PopBestInQueue(Qv);                                                 // A2.1
+            float gHat; 
+            float cHat; 
+            float hHat;
             //if Vmin in Vunexpanded 
-            if (b_VertexIsIn(Vmin, Vunexpnd)) {                                                 // A2.2
+            bool vminInVunexpnd = b_VertexIsIn(Vmin, Vunexpnd);
+
+            // check the samples
+            if (vminInVunexpnd) {                                                               // A2.2
                 std::cout << "vertex is IN!" << std::endl;
                 Xnear = Near(Xunconn, Vmin, rBitStar, kBitStar);                                // A2.3
                 std::cout << "X near: " << Xnear.size(); 
@@ -147,7 +157,31 @@ class BITSTAR{
                 XnearAndUnconnected = SetIntersection(Xnear, Xunconn);                          // A2.5
                 Xnear = Near(XnearAndUnconnected, Vmin, rBitStar, kBitStar);                    // A2.5
             }
-            // 
+            for (auto &i : Xnear) { 
+                gHat = fCalculateDist(i, start); i.gHat = gHat;                                 // A2.6
+                cHat = fCalculateDist(i, Vmin);                                                 // A2.6 
+                hHat = fCalculateDist(i, goal); i.hHat = hHat;                                  // A2.6
+                if (gHat + cHat + hHat < ci) {                                                  // A2.6
+                    edge EdgeToPush;                                                            // A2.6
+                    EdgeToPush.source_state = Vmin; EdgeToPush.target_state = i;                // A2.6
+                    EdgeToPush.cHat = cHat;
+                    Qe.push(EdgeToPush);                                                        // A2.6
+                };
+            } // A2.6  for loop
+
+            // check the motion tree
+            if (vminInVunexpnd) {                                                               // A2.7
+                std::cout << "in the second part of the loop" << std::endl;
+                Vnear = Near(V, Vmin, rBitStar, kBitStar);                                      // A2.8
+                std::cout << Vnear.size() << std::endl;
+                for (auto &i : Vnear) {
+                    gHat = fCalculateDist(i, start); i.gHat = gHat;                                 // A2.6
+                    cHat = fCalculateDist(i, Vmin);                                                 // A2.6 
+                    hHat = fCalculateDist(i, goal); i.hHat = hHat;                                  // A2.6
+                }// A2.9 for loop
+            };
+
+            
         }; 
 
         stateVector SetIntersection(stateVector set1, stateVector set2) {
@@ -224,9 +258,20 @@ class BITSTAR{
                                     (V1.y == V2.y) &&
                                     (V1.f == V2.f) &&
                                     (V1.gT == V2.gT) &&
-                                    (V1.hhat == V2.hhat));
+                                    (V1.hHat == V2.hHat));
             return verticesAreEqual; 
         };
+        
+        bool b_EdgesAreEqual(edge E1, edge E2) {
+            bool edgesAreEqual = b_VerticesAreEqual(E1.source_state, E2.source_state) &&
+                                 b_VerticesAreEqual(E1.target_state, E2.target_state);
+            return edgesAreEqual;
+        };
+        //bool b_EdgeIsIn (edge E, edgeVector edgeSet) {
+        //    // input is an edge and an edge vector
+        //    // output: whether or not the edge is a member of the corresponding edge set
+        //    // equality of the edge is measured if both states are the same 
+        //};
         // I should write simple test functions as I go along
         void print_state_vector(std::vector<state> state_vector, std::string vector_name) {
             int i=0; 
@@ -244,7 +289,7 @@ class BITSTAR{
         V1.y = 0.0f; V2.y = 0.0f; 
         V1.f = 3.14f; V2.f = 3.14;  
         V1.gT = INFINITY; V2.gT = INFINITY; 
-        V1.hhat = INFINITY; V2.hhat = INFINITY;
+        V1.hHat = INFINITY; V2.hHat = INFINITY;
         bool areEqual = b_VerticesAreEqual(V1, V2);
         return areEqual;
     };
@@ -343,6 +388,27 @@ class BITSTAR{
         if (commonStates.size() == 2) return true;
         return false;
     };
+    
+    bool bTest_b_EdgesAreEqual() {
+        edge E1, E2, E3;
+        state E1s, E1t, E2s, E2t, E3s, E3t; 
+        E1s.x = 0.0f; E1s.y = 0.0f;
+        E1t.x = 0.0f; E1t.y = 0.0f;
+
+        E2s.x = 0.0f; E2s.y = 0.0f;
+        E2t.x = 0.0f; E2t.y = 0.0f;
+        
+        E3s.x = 0.0f; E3s.y = 0.0f;
+        E3t.x = 1.0f; E3t.y = 1.0f;
+
+        E1.source_state = E1s; E1.target_state = E1t;
+        E2.source_state = E2s; E2.target_state = E2t;
+
+        if (b_EdgesAreEqual(E1, E2) && !b_EdgesAreEqual(E1,E3)) return true;
+        return false;
+
+
+    };
 
     bool unit_test() {
         bool bqvv_works = bTest_fV_BestQueueValue();
@@ -350,8 +416,19 @@ class BITSTAR{
         bool bvae_works = bTest_b_VerticesAreEqual();
         bool near_works = bTest_Near();
         bool sint_works = bTest_SetIntersection();
+        bool edge_equal_works = bTest_b_EdgesAreEqual();
+
+        std::cout << "UNIT TEST RESULTS: " << std::endl;
+    
+        std::cout << "Best Vertex Queue Value: " << bqvv_works << std::endl;  
+        std::cout << "Best Edge Queue Value: " << bqve_works << std::endl;  
+        std::cout << "Vertex Equality: " << bvae_works << std::endl;  
+        std::cout << "Near() Function: " << near_works << std::endl;  
+        std::cout << "Set Intersection: " << sint_works << std::endl;
+        std::cout << "Edge Equality: " << edge_equal_works << std::endl;
+        
         return bqvv_works && bqve_works && 
-               bvae_works && near_works && sint_works;
+               bvae_works && near_works && sint_works && edge_equal_works;
     };
 //// BIT STARS ENDING BRACE DO NOT TOUCH
 };///DONT TOUCH
@@ -370,7 +447,7 @@ int main () {
     std::cout << "TEST WORKED IF 1 == " << test_works << std::endl;
     std::cout << std::endl;
     if (test_works) {
-        BS.BIT_STAR({1.1, 3.0f}, {9.0f, 9.0f});
+        BS.BIT_STAR({1.1, 3.0f}, {1.0f, 2.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
     };
 
     // unit testing my stuff
