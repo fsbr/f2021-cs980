@@ -16,9 +16,16 @@ class BITSTAR{
         // putting debugging utilities in the "private" part of the class structure
     public:
         // major params for BIT* 
+
+        // Boundaries
+        float xMax = 10.0f; 
+        float yMax = 10.0f; 
+
+        // RGG Parameters
         int kBitStar = 10; 
         float rBitStar = 3.0f;
-        // all our math helper functions going to go at the top
+
+        // Calculate L2 Norm
         float calculate_L2(float x1, float y1, float x2, float y2){
             float L_2 = sqrt( pow((x2-x1),2) + pow((y2-y1),2) ); 
             return L_2;
@@ -77,6 +84,12 @@ class BITSTAR{
         typedef std::vector<edge> edgeVector;
         typedef std::vector<state> stateVector;
 
+        // something from stackoverflow that i hope clears my queue
+        template<class Q>           // dont really understand how template works but i should probably learn it
+        void clearQueue(Q& q) {
+            q = Q();
+        }
+
         // BIT_STAR
         void BIT_STAR(state start, state goal){
             // preprocessing the start vertex
@@ -109,11 +122,22 @@ class BITSTAR{
 
             float ci = INFINITY;                                                            // 5.0  This feels like cheating, since on the first pass it will definitely be equal to infinity
 
+            // stuff for lines 7-12
+            stateVector Xsampling;
+            stateVector Xreuse;
+            
             // REPEAT                                                                       // 6.0
             while (true) {
+                std::cout << "Qe.size() == " << Qe.size() << " Qv.size() == " << Qv.size() << std::endl;
                 if ((Qe.size() == 0) && (Qv.size() == 0)){                                      // 7.0
-                    std::cout << "testing if I got into the lines 7-12" << std::endl;
-                    std::cout << "lines 7 thru 12 don't happen the first iteration" << std::endl;
+                    std::cout << "The part where I sample stuff " << std::endl;
+                    // we are going to write the pruning function last i think
+                    //Xsamping = Sample() ;
+
+
+
+
+
                     std::exit(0); // causes 120 bytes to be lost on exit
                     // 12.0 
                 };
@@ -132,12 +156,22 @@ class BITSTAR{
                     std::cout << "\tVunexpnd Size " << Vunexpnd.size() << std::endl;  
                     std::cout << " || || | ||" << std::endl;
                 };
-                edge currentEdge = E_PopBestInQueue(Qe); 
-                std::cout << "Trying to understand whats in the edge queue" << std::endl;
-                std::cout << "source state: "; 
-                std::cout << currentEdge.source_state.x << " " << currentEdge.source_state.y << std::endl;
-                std::cout << "target state: ";
-                std::cout << currentEdge.target_state.x << " " << currentEdge.target_state.y << std::endl;
+                std::cout << " I think its failing when it tries to pop into an empty edge queue "  << std::endl;
+
+                if (!Qe.empty()) {    // it only makes sense to pop from a non empty queue
+                    edge currentEdge = E_PopBestInQueue(Qe); 
+                    std::cout << "Trying to understand whats in the edge queue" << std::endl;
+                    std::cout << "source state: "; 
+                    std::cout << currentEdge.source_state.x << " " << currentEdge.source_state.y << std::endl;
+                    std::cout << "target state: ";
+                    std::cout << currentEdge.target_state.x << " " << currentEdge.target_state.y << std::endl;
+                } else {
+                    // how to empty a queue                    
+                    clearQueue(Qe); clearQueue(Qv);                                                                     // 34.0
+                    std::cout << "is the vertex queue empty? " << Qv.empty() << std::endl;
+                    std::cout << "is the edge queue empty? " << Qe.empty() << std::endl;
+
+                } 
                 
                 //std::cout << "diagnostic message to let you know i am stuck in this while loop" <<std::endl;
                 //std::cout << " how big is my edge queue " << Qe.size() << std::endl;
@@ -217,6 +251,35 @@ class BITSTAR{
             }; 
             return commonStates;
         };
+        stateVector Sample(int m, state start, state goal,  float ci){
+            stateVector sampledStates;
+            // sample states and if they are within 
+            float xRand;
+            float yRand;
+            float xs, ys;       // this is so much effor to test other types of systems!!
+            float xg, yg;
+            float tmpG, tmpH;
+            int counter = 0;
+            xs = start.x; ys = start.y;         // am i rushing?
+            xg = goal.x; yg = goal.y;
+            while (counter < m) {
+
+                xRand = (float(rand()) / float(RAND_MAX))*xMax;     // trims the samples to the boundary
+                yRand = (float(rand()) / float(RAND_MAX))*yMax;
+                tmpG = calculate_L2(xs,ys,xRand,yRand);             // calculating the ellispe
+                tmpH = calculate_L2(xg,yg,xRand,yRand); 
+                if ((tmpG + tmpH) < ci) {
+                    // theres going to be collision checking based on the input MAP that needs to go here
+                    // the FLOOR function that i studied was written in notebook 2 page 105
+                    state stateToAdd;
+                    stateToAdd.x = xRand; stateToAdd.y = yRand;
+                    sampledStates.push_back(stateToAdd);
+                    counter++;      // only increment the counter if the sample was valid
+                }
+            }; 
+
+            return sampledStates;
+        }; 
         stateVector Near(stateVector StatesToCheck, state vertexToCheck,  float rggRadius, int numberOfNeighbors) {
             // I need to pick the RGG radius or the KNN
             // inputs:  statevector: to be searched
@@ -546,7 +609,10 @@ class BITSTAR{
         return false;
 
     };
-
+    
+    bool bTest_Sample() {
+        // not sure how I'm going to be able to do this one
+    };
     bool unit_test() {
         bool bqvv_works = bTest_fV_BestQueueValue();
         bool bqve_works = bTest_fE_BestQueueValue();
