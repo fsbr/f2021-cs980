@@ -121,10 +121,13 @@ class BITSTAR{
                 //  on the first iteration, i shoudl be in here, since the vertex queue is empty
                     // EXPAND NEXT VERTEX
                     ExpandNextVertex(Qv, Qe, ci, Vunexpnd, Xunconn, start, goal,V,E);                                               //  14.0
-                    std::cout << "BEST VERTEX VALUE " << fV_BestQueueValue(Qv);
-                    std::cout << " BEST EDGE VALUE " << fE_BestQueueValue(Qe) << std::endl;
-                    std::cout << "  Vertex Queue Size " << Qv.size();
-                    std::cout << "  EDGE Queue Size " << Qe.size();
+                    std::cout << " || || | ||" << std::endl;
+                    std::cout << "\tBEST VERTEX VALUE " << fV_BestQueueValue(Qv);
+                    std::cout << "\tBEST EDGE VALUE " << fE_BestQueueValue(Qe) << std::endl;
+                    std::cout << "\tVertex Queue Size " << Qv.size() << std::endl;
+                    std::cout << "\tEDGE Queue Size " << Qe.size() << std::endl;
+                    std::cout << "\tVunexpnd Size " << Vunexpnd.size() << std::endl;  
+                    std::cout << " || || | ||" << std::endl;
                 };
                 //std::cout << "diagnostic message to let you know i am stuck in this while loop" <<std::endl;
                 //std::cout << " how big is my edge queue " << Qe.size() << std::endl;
@@ -183,11 +186,12 @@ class BITSTAR{
                     if (gHat + cHat + hHat < ci && !b_EdgeIsIn(EdgeToPush, E)) {                // A2.9
                         EdgeToPush.cHat = cHat; 
                         Qe.push(EdgeToPush);
+                        std::cout << "did i push the edge?" << std::endl;
                     }; 
                 }// A2.9 for loop
             };
             // remove Vmin from the "unexpanded list"                                           
-            
+            removeStateFromSet(Vmin, Vunexpnd);                                                 // A2.10
         }; 
 
         stateVector SetIntersection(stateVector set1, stateVector set2) {
@@ -284,6 +288,24 @@ class BITSTAR{
                 if (edgeIsIn) {
                     return edgeIsIn; 
                 }
+            };
+            return false;
+        };
+
+        bool removeStateFromSet(state Vertex, stateVector& VectorList) {
+            // inputs: a Vertex and a stateVector
+            // effect: it removes that state from the stateVector VectorList
+            // if we dont see that effect globally, we can trace the references back
+            // the VectorList is passed by reference to modify the ACTUAL list that you are working with.
+            int stateIdx = 0;
+            for (auto &i : VectorList) {
+                // asdfadsf
+                std::cout << "idk what im doing" << std::endl;
+                if (b_VerticesAreEqual(i, Vertex)){
+                    VectorList.erase(VectorList.begin() + stateIdx);
+                    return true;    // so we are hoping that multiple copies dont get in here
+                }
+                stateIdx++; 
             };
             return false;
         };
@@ -431,6 +453,24 @@ class BITSTAR{
 
     };
 
+    bool bTest_removeStateFromSet(){
+        // testing state removal from vector, kinda wish i messed around with hash table now, 
+        // but i'm committed
+        state s1, s2, s3, s4; 
+        stateVector stateList;
+        s1.x = 1.0f; s1.y = 1.0;
+        s2.x = 1.0f; s2.y = 2.0;
+        s3.x = 3.0f; s3.y = 3.0;
+        s4.x = 4.0f; s4.y = 4.0;
+        stateList.push_back(s1); stateList.push_back(s2); 
+        stateList.push_back(s3); stateList.push_back(s4); 
+        removeStateFromSet(s4, stateList); 
+        print_state_vector(stateList, "asdf");
+        // read the printout to make sure
+        if (stateList.size() == 3 && stateList[2].x == 3.0) return true;
+        return false;
+    };
+
     bool unit_test() {
         bool bqvv_works = bTest_fV_BestQueueValue();
         bool bqve_works = bTest_fE_BestQueueValue();
@@ -438,6 +478,7 @@ class BITSTAR{
         bool near_works = bTest_Near();
         bool sint_works = bTest_SetIntersection();
         bool edge_equal_works = bTest_b_EdgesAreEqual();
+        bool state_V_removal_works = bTest_removeStateFromSet();
 
         std::cout << std::endl;
         std::cout << "UNIT TEST RESULTS: " << std::endl;
@@ -448,9 +489,11 @@ class BITSTAR{
         std::cout << "\tNear() Function: " << near_works << std::endl;  
         std::cout << "\tSet Intersection / Vertex Membership: " << sint_works << std::endl;
         std::cout << "\tEdge Equality: " << edge_equal_works << std::endl;
+        std::cout << "\tState Removal From V Vector: " << state_V_removal_works << std::endl;
         
         return bqvv_works && bqve_works && 
-               bvae_works && near_works && sint_works && edge_equal_works;
+               bvae_works && near_works && sint_works && 
+               edge_equal_works && state_V_removal_works;
     };
 //// BIT STARS ENDING BRACE DO NOT TOUCH
 };///DONT TOUCH
