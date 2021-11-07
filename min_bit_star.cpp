@@ -132,7 +132,9 @@ class BITSTAR{
                     std::cout << "\tVunexpnd Size " << Vunexpnd.size() << std::endl;  
                     std::cout << " || || | ||" << std::endl;
                 };
-                //edge currentEdge = 
+                edge currentEdge = E_PopBestInQueue(Qe); 
+                std::cout << "Trying to understand whats in the edge queue" << std::endl;
+                std::cout << " source vertex" << std::endl;
                 //std::cout << "diagnostic message to let you know i am stuck in this while loop" <<std::endl;
                 //std::cout << " how big is my edge queue " << Qe.size() << std::endl;
             };//UNTIL STOP;
@@ -247,10 +249,17 @@ class BITSTAR{
         };
         state sV_PopBestInQueue(vertexQueueType& Qv){
             // will i regret not writing a unit test for this?
-            std::cout << "pop best in queue " << std::endl; 
+            std::cout << "pop best in vertex queue " << std::endl; 
             state Top = Qv.top();
             std::cout << Top.x << std::endl;;
             Qv.pop();
+            return Top;
+        };
+        edge E_PopBestInQueue(edgeQueueType& Qe) {
+            // there has to be a smart way to do this
+            std::cout << "pop best in edge queue" << std::endl;
+            edge Top = Qe.top();
+            Qe.pop();
             return Top;
         };
 
@@ -332,21 +341,25 @@ class BITSTAR{
         // effects: this function attempts to search the motion tree until the root is reached, 
         // page 111 of notebook 2 shows the tree that this wokrs on.
         float gT = 0.0f; 
+        bool stateFound = false;
         // this is hard for me to visualize, how to instruct the computer what to do. 
         state tmpSourceState;
         while (!b_VerticesAreEqual(stateOfInterest, start)){         // hopefully stops my tree traversal when i hit the start state
             std::cout << "im in the while loops stuck for good" << std::endl;
+            stateFound = false;                                // if no state is found while searching the edges, we need to return gT = INFINITY
             for (auto &i : E) {
                 if(b_VerticesAreEqual(stateOfInterest, i.target_state)){
+                    stateFound = true;        
                     gT +=i.cHat;                                    // i think this works since states in the motion tree have non infinite costs
                     std::cout << "gT value: " << gT << std::endl;  // it never looks 
                     stateOfInterest = i.source_state;
                 }; 
             };
+            if (!stateFound) return INFINITY;                       // need this for if hte tree isnt connected
         }
-        return gT;
-    
+       return gT;
     };
+
     // UNIT TESTS OF EACH PART 
     bool bTest_b_VerticesAreEqual() {
         state V1, V2;  
@@ -517,9 +530,10 @@ class BITSTAR{
         E4.source_state = s3; E4.target_state = s5;      E4.cHat = 7.0f; 
         V.push_back(start);
         V.push_back(s1); V.push_back(s2); V.push_back(s3); V.push_back(s4); V.push_back(s5);
-        E.push_back(E0); E.push_back(E1); E.push_back(E2); E.push_back(E3); E.push_back(E4);
+        E.push_back(E0); 
+        E.push_back(E1); E.push_back(E2); E.push_back(E3); E.push_back(E4);
         float costGivenCurrentTree = calculateGT(s5, start, V, E);
-        std::cout<< "Cost Given Current test tree" << costGivenCurrentTree << std::endl; 
+        std::cout<< "Cost Given Current test tree: " << costGivenCurrentTree << std::endl; 
         if (costGivenCurrentTree == 13.0f) return true;
         return false;
 
