@@ -129,6 +129,7 @@ class BITSTAR{
                     std::cout << "\tVunexpnd Size " << Vunexpnd.size() << std::endl;  
                     std::cout << " || || | ||" << std::endl;
                 };
+                //edge currentEdge = 
                 //std::cout << "diagnostic message to let you know i am stuck in this while loop" <<std::endl;
                 //std::cout << " how big is my edge queue " << Qe.size() << std::endl;
             };//UNTIL STOP;
@@ -512,7 +513,7 @@ int main () {
     std::cout << "\tTEST WORKED IF 1 == " << test_works << std::endl;
     std::cout << std::endl;
     if (test_works) {
-        BS.BIT_STAR({1.1, 3.0f}, {1.0f, 2.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
+        BS.BIT_STAR({1.1, 3.0f}, {9.0f, 9.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
     };
 
     // unit testing my stuff
