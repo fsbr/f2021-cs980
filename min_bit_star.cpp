@@ -120,7 +120,7 @@ class BITSTAR{
                 while  ((Qv.size() > 0) &  (fV_BestQueueValue(Qv) <= fE_BestQueueValue(Qe)) ){   // 13.0
                 //  on the first iteration, i shoudl be in here, since the vertex queue is empty
                     // EXPAND NEXT VERTEX
-                    ExpandNextVertex(Qv, Qe, ci, Vunexpnd, Xunconn, start, goal,V);                                               //  14.0
+                    ExpandNextVertex(Qv, Qe, ci, Vunexpnd, Xunconn, start, goal,V,E);                                               //  14.0
                     std::cout << "BEST VERTEX VALUE " << fV_BestQueueValue(Qv);
                     std::cout << " BEST EDGE VALUE " << fE_BestQueueValue(Qe) << std::endl;
                     std::cout << "  Vertex Queue Size " << Qv.size();
@@ -135,7 +135,7 @@ class BITSTAR{
         // EXPAND NEXT VERTEX (Algorithm 2)
         void ExpandNextVertex(vertexQueueType& Qv, edgeQueueType& Qe, 
                               float& ci, stateVector& Vunexpnd, stateVector& Xunconn,
-                              state& start, state& goal, stateVector V){                                       // there has to be a cleaner way
+                              state& start, state& goal, stateVector& V, edgeVector& E){                                       // there has to be a cleaner way
             std::cout << "Expanding next vertex. Cost = " << ci << std::endl;
             stateVector Xnear, XnearAndUnconnected, Vnear; 
             state Vmin = sV_PopBestInQueue(Qv);                                                 // A2.1
@@ -175,13 +175,18 @@ class BITSTAR{
                 Vnear = Near(V, Vmin, rBitStar, kBitStar);                                      // A2.8
                 std::cout << Vnear.size() << std::endl;
                 for (auto &i : Vnear) {
-                    gHat = fCalculateDist(i, start); i.gHat = gHat;                                 // A2.6
-                    cHat = fCalculateDist(i, Vmin);                                                 // A2.6 
-                    hHat = fCalculateDist(i, goal); i.hHat = hHat;                                  // A2.6
-                //if (gHat + cHat + hHat < ci && 
+                    gHat = fCalculateDist(i, start); i.gHat = gHat;                             // stuff to make 2.9 possible
+                    cHat = fCalculateDist(i, Vmin);                                             // 
+                    hHat = fCalculateDist(i, goal); i.hHat = hHat;                              // 
+                    edge EdgeToPush;                                                            // 
+                    EdgeToPush.source_state = Vmin; EdgeToPush.target_state = i;                // 
+                    if (gHat + cHat + hHat < ci && !b_EdgeIsIn(EdgeToPush, E)) {                // A2.9
+                        EdgeToPush.cHat = cHat; 
+                        Qe.push(EdgeToPush);
+                    }; 
                 }// A2.9 for loop
             };
-
+            // remove Vmin from the "unexpanded list"                                           
             
         }; 
 
@@ -400,6 +405,7 @@ class BITSTAR{
     };
     
     bool bTest_b_EdgesAreEqual() {
+        // tests edge equality and edge membership
         // this also tests edge membership
         edgeVector edgeList; 
         edge E1, E2, E3;
@@ -433,14 +439,15 @@ class BITSTAR{
         bool sint_works = bTest_SetIntersection();
         bool edge_equal_works = bTest_b_EdgesAreEqual();
 
+        std::cout << std::endl;
         std::cout << "UNIT TEST RESULTS: " << std::endl;
     
-        std::cout << "Best Vertex Queue Value: " << bqvv_works << std::endl;  
-        std::cout << "Best Edge Queue Value: " << bqve_works << std::endl;  
-        std::cout << "Vertex Equality: " << bvae_works << std::endl;  
-        std::cout << "Near() Function: " << near_works << std::endl;  
-        std::cout << "Set Intersection / Vertex Membership: " << sint_works << std::endl;
-        std::cout << "Edge Equality: " << edge_equal_works << std::endl;
+        std::cout << "\tBest Vertex Queue Value: " << bqvv_works << std::endl;  
+        std::cout << "\tBest Edge Queue Value: " << bqve_works << std::endl;  
+        std::cout << "\tVertex Equality: " << bvae_works << std::endl;  
+        std::cout << "\tNear() Function: " << near_works << std::endl;  
+        std::cout << "\tSet Intersection / Vertex Membership: " << sint_works << std::endl;
+        std::cout << "\tEdge Equality: " << edge_equal_works << std::endl;
         
         return bqvv_works && bqve_works && 
                bvae_works && near_works && sint_works && edge_equal_works;
@@ -459,7 +466,7 @@ int main () {
     test_works = BS.unit_test(); 
         
     std::cout << std::endl;
-    std::cout << "TEST WORKED IF 1 == " << test_works << std::endl;
+    std::cout << "\tTEST WORKED IF 1 == " << test_works << std::endl;
     std::cout << std::endl;
     if (test_works) {
         BS.BIT_STAR({1.1, 3.0f}, {1.0f, 2.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
