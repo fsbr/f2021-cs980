@@ -178,6 +178,7 @@ class BITSTAR{
                     gHat = fCalculateDist(i, start); i.gHat = gHat;                                 // A2.6
                     cHat = fCalculateDist(i, Vmin);                                                 // A2.6 
                     hHat = fCalculateDist(i, goal); i.hHat = hHat;                                  // A2.6
+                //if (gHat + cHat + hHat < ci && 
                 }// A2.9 for loop
             };
 
@@ -252,6 +253,7 @@ class BITSTAR{
             };
             return false; 
         };
+
         bool b_VerticesAreEqual(const state& V1, const state& V2) {
             // input is two states: output is whether or not every member of their structure is equal
             bool verticesAreEqual = ((V1.x == V2.x) && 
@@ -267,11 +269,19 @@ class BITSTAR{
                                  b_VerticesAreEqual(E1.target_state, E2.target_state);
             return edgesAreEqual;
         };
-        //bool b_EdgeIsIn (edge E, edgeVector edgeSet) {
-        //    // input is an edge and an edge vector
-        //    // output: whether or not the edge is a member of the corresponding edge set
-        //    // equality of the edge is measured if both states are the same 
-        //};
+        bool b_EdgeIsIn (edge E, edgeVector edgeSet) {
+            // input is an edge and an edge vector
+            // output: whether or not the edge is a member of the corresponding edge set
+            // equality of the edge is measured if both states are the same 
+            bool edgeIsIn; 
+            for (auto &r : edgeSet) {
+                edgeIsIn = b_EdgesAreEqual(r, E);
+                if (edgeIsIn) {
+                    return edgeIsIn; 
+                }
+            };
+            return false;
+        };
         // I should write simple test functions as I go along
         void print_state_vector(std::vector<state> state_vector, std::string vector_name) {
             int i=0; 
@@ -390,6 +400,8 @@ class BITSTAR{
     };
     
     bool bTest_b_EdgesAreEqual() {
+        // this also tests edge membership
+        edgeVector edgeList; 
         edge E1, E2, E3;
         state E1s, E1t, E2s, E2t, E3s, E3t; 
         E1s.x = 0.0f; E1s.y = 0.0f;
@@ -403,8 +415,11 @@ class BITSTAR{
 
         E1.source_state = E1s; E1.target_state = E1t;
         E2.source_state = E2s; E2.target_state = E2t;
-
-        if (b_EdgesAreEqual(E1, E2) && !b_EdgesAreEqual(E1,E3)) return true;
+    
+        edgeList.push_back(E1); edgeList.push_back(E2); edgeList.push_back(E3); 
+        bool isTheEdgeIn = b_EdgeIsIn(E2, edgeList); 
+        
+        if (b_EdgesAreEqual(E1, E2) && !b_EdgesAreEqual(E1,E3) && isTheEdgeIn) return true;
         return false;
 
 
@@ -424,7 +439,7 @@ class BITSTAR{
         std::cout << "Best Edge Queue Value: " << bqve_works << std::endl;  
         std::cout << "Vertex Equality: " << bvae_works << std::endl;  
         std::cout << "Near() Function: " << near_works << std::endl;  
-        std::cout << "Set Intersection: " << sint_works << std::endl;
+        std::cout << "Set Intersection / Vertex Membership: " << sint_works << std::endl;
         std::cout << "Edge Equality: " << edge_equal_works << std::endl;
         
         return bqvv_works && bqve_works && 
