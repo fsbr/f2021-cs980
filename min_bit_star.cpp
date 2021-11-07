@@ -134,7 +134,11 @@ class BITSTAR{
                 };
                 edge currentEdge = E_PopBestInQueue(Qe); 
                 std::cout << "Trying to understand whats in the edge queue" << std::endl;
-                std::cout << " source vertex" << std::endl;
+                std::cout << "source state: "; 
+                std::cout << currentEdge.source_state.x << " " << currentEdge.source_state.y << std::endl;
+                std::cout << "target state: ";
+                std::cout << currentEdge.target_state.x << " " << currentEdge.target_state.y << std::endl;
+                
                 //std::cout << "diagnostic message to let you know i am stuck in this while loop" <<std::endl;
                 //std::cout << " how big is my edge queue " << Qe.size() << std::endl;
             };//UNTIL STOP;
@@ -176,6 +180,7 @@ class BITSTAR{
                     //EdgeToPush.f = gHat + cHat + hHat;
                     EdgeToPush.cHat = cHat;
                     Qe.push(EdgeToPush);                                                        // A2.6
+                    std::cout << "enqueing edge based on Xnear" << std::endl;
                 };
             } // A2.6  for loop
 
@@ -194,7 +199,7 @@ class BITSTAR{
                         EdgeToPush.f = gHat + cHat + hHat;
                         EdgeToPush.cHat = cHat; 
                         Qe.push(EdgeToPush);
-                        std::cout << "Edge Should be Enqueued" << std::endl;
+                        std::cout << "enqueing edge based on Vnear" << std::endl;
                     }; 
                 }// A2.9 for loop
             };
@@ -233,8 +238,10 @@ class BITSTAR{
             while (!NeighborQueue.empty() && neighborCounter < numberOfNeighbors) {
                 state TopState = NeighborQueue.top();
                 NeighborQueue.pop();
-                if (TopState.r < rggRadius) NearestNeighbors.push_back(TopState);
-                neighborCounter++;
+                if (TopState.r < rggRadius && !b_VerticesAreEqual(TopState, vertexToCheck)) {
+                    NearestNeighbors.push_back(TopState);
+                    neighborCounter++;
+                }
             };
             return NearestNeighbors;
         }; // Near
@@ -423,14 +430,15 @@ class BITSTAR{
         float rggRadius = 3.0f;
         int numberOfNeighbors = 2; 
         // i'll test 3 states, and see if just two appear in the neighbor list
-        state s0, s1, s2, s3, s4, s5;
+        state s0, s1, s2, s3, s4, s5, s6;
         s0.x = 0.0f; s0.y = 0.0f;
         s1.x = 1.0; s1.y = 1.0; 
         s2.x = -1.5; s2.y = -1.5; 
         s3.x = 3.0; s3.y = 3.0;
         s4.x = -1.6; s4.y = 1.6;
         s5.x = -1.0; s5.y = 1.0;
-        StatesToCheck.push_back(s5); 
+        s6.x = 0.0f; s6.y = 0.0f;
+        StatesToCheck.push_back(s5); StatesToCheck.push_back(s6);   
         StatesToCheck.push_back(s1);StatesToCheck.push_back(s4);  StatesToCheck.push_back(s3); StatesToCheck.push_back(s2);
         NeighborsCheck = Near(StatesToCheck, s0, rggRadius, numberOfNeighbors); 
         std::cout << NeighborsCheck.size() << std::endl; 
@@ -583,7 +591,7 @@ int main () {
     std::cout << "\tTEST WORKED IF 1 == " << test_works << std::endl;
     std::cout << std::endl;
     if (test_works) {
-        BS.BIT_STAR({1.1, 3.0f}, {9.0f, 9.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
+        BS.BIT_STAR({2.1, 3.0f}, {9.0f, 9.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
     };
 
     // unit testing my stuff
