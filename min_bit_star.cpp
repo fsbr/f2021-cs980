@@ -119,7 +119,7 @@ class BITSTAR{
             stateVector Vsoln;                                                              // 4.0
             Vsoln.push_back(goal);                                                          // 4.0 
             std::vector<state> Vunexpnd;                                                    // 4.1
-            Vunexpnd.push_back(start);                                                       // 4.1 
+            Vunexpnd.push_back(start);                                                      // 4.1 
             std::vector<state> Xnew;                                                        // 4.2
             Xnew.push_back(goal);                                                           // 4.2 this maybe only working because the goal right now is a single point.
 
@@ -130,7 +130,9 @@ class BITSTAR{
             stateVector Xreuse;
             
             // REPEAT                                                                       // 6.0
-            while (true) {
+            int whileTrueIterations = 0;
+            //while (true) {
+            while (whileTrueIterations < 2) {
                 std::cout << "Qe.size() == " << Qe.size() << " Qv.size() == " << Qv.size() << std::endl;
                 if ((Qe.size() == 0) && (Qv.size() == 0)){                                      // 7.0
                     std::cout << "The part where I sample stuff " << std::endl;
@@ -142,14 +144,17 @@ class BITSTAR{
                     Xunconn = Append(Xunconn, Xnew);                                            // 11.0
                     std::cout << "how big is Xunconn: " << Xunconn.size() << std::endl;         // i think its suppose to be 51 
                     EnqueueMotionTreeVertices(Qv, V);                                           //12.0
-                    //std::exit(0); // causes 120 bytes to be lost on exit
-                    // 12.0 
+                    std::cout << "Qv.size() in 7-12 block: " << Qv.size() << std::endl;
                 };
                 while  ((Qv.size() > 0) &  (fV_BestQueueValue(Qv) <= fE_BestQueueValue(Qe)) ){   // 13.0
                 //  on the first iteration, i shoudl be in here, since the vertex queue is empty
                     // EXPAND NEXT VERTEX
-                    ExpandNextVertex(Qv, Qe, ci, Vunexpnd, Xunconn, start, goal,V,E);                                               //  14.0
+                    std::cout << "DID I GET TO EXPAND NEXT VERTEX" << std::endl;
+                    ExpandNextVertex(Qv, Qe, ci, Vunexpnd, Xunconn, Xnew, start, goal,V,E);                                               //  14.0
+
+                    // DIAG MESSAGES NOT PART OF OUR ALGORITHM
                     std::cout << " || || | ||" << std::endl;
+                    std::cout << "DIAG MESSAGES IN MAIN AFTER ExpandNextVertex() " << std::endl;
                     std::cout << "\tBEST VERTEX VALUE " << fV_BestQueueValue(Qv);
                     std::cout << "\tBEST EDGE VALUE " << fE_BestQueueValue(Qe) << std::endl;
                     std::cout << "\tNUMBER OF VERTICES IN V " << V.size()<< std::endl;
@@ -159,16 +164,20 @@ class BITSTAR{
                     std::cout << "\tEDGE Queue Size " << Qe.size() << std::endl;
                     std::cout << "\tVunexpnd Size " << Vunexpnd.size() << std::endl;  
                     std::cout << " || || | ||" << std::endl;
+
                 };
-                std::cout << " I think its failing when it tries to pop into an empty edge queue "  << std::endl;
 
                 if (!Qe.empty()) {    // it only makes sense to pop from a non empty queue
-                    edge currentEdge = E_PopBestInQueue(Qe); 
+                    edge currentEdge = E_PopBestInQueue(Qe);                                    // 15.0
+                    std::cout << "DIAG MESSAGES POST PopBestIn (Edge) Queue " << std::endl;
                     std::cout << "Trying to understand whats in the edge queue" << std::endl;
                     std::cout << "source state: "; 
                     std::cout << currentEdge.source_state.x << " " << currentEdge.source_state.y << std::endl;
                     std::cout << "target state: ";
                     std::cout << currentEdge.target_state.x << " " << currentEdge.target_state.y << std::endl;
+
+                    // We need GT Several Times here
+
                 } else {
                     // how to empty a queue                    
                     clearQueue(Qe); clearQueue(Qv);                                                                     // 34.0
@@ -179,16 +188,20 @@ class BITSTAR{
                 
                 //std::cout << "diagnostic message to let you know i am stuck in this while loop" <<std::endl;
                 //std::cout << " how big is my edge queue " << Qe.size() << std::endl;
+            //std::exit(0); // we just want to run BIT* once
+                whileTrueIterations++;
             };//UNTIL STOP;
             // RETURN T;
         }; // MAIN BIT_STAR END
 
         // EXPAND NEXT VERTEX (Algorithm 2)
         void ExpandNextVertex(vertexQueueType& Qv, edgeQueueType& Qe, 
-                              float& ci, stateVector& Vunexpnd, stateVector& Xunconn,
+                              float& ci, stateVector& Vunexpnd, stateVector& Xunconn,stateVector& Xnew, 
                               state& start, state& goal, stateVector& V, edgeVector& E){                                       // there has to be a cleaner way
-            std::cout << "Expanding next vertex. Cost = " << ci << std::endl;
+            std::cout << "HOW MANY STATES ARE IN Xunconn: " << Xunconn.size();
+            std::cout << "Expanding next vertex. Cost (ci) = " << ci << std::endl;
             stateVector Xnear, XnearAndUnconnected, Vnear; 
+            std::cout << "How big is the vertex Queue when I go to expand?: "<< Qv.size() << std::endl;
             state Vmin = sV_PopBestInQueue(Qv);                                                 // A2.1
             float gHat; 
             float cHat; 
@@ -199,14 +212,22 @@ class BITSTAR{
             // check the samples
             if (vminInVunexpnd) {                                                               // A2.2
                 std::cout << "vertex is IN!" << std::endl;
+                // checking my Xnear Function
+                std::cout << "Xunconn Size(): " << Xunconn.size() << std::endl;
+                std::cout << "Vmin (x,y): " << Vmin.x << "|" << Vmin.y << std::endl; 
                 Xnear = Near(Xunconn, Vmin, rBitStar, kBitStar);                                // A2.3
-                std::cout << "X near: " << Xnear.size(); 
+                std::cout << "X near size: " << Xnear.size(); 
             }
             else {                                                                              // A2.4
                 std::cout << "vertex is OUT!" << std::endl;
                 // scary since i wont be able to test this right away
-                XnearAndUnconnected = SetIntersection(Xnear, Xunconn);                          // A2.5
+                std::cout << "Xnew Size(): "<< Xnear.size() << std::endl;
+                std::cout << "Xunconn Size(): " << Xunconn.size() << std::endl;
+                std::cout << "Vmin (x,y): " << Vmin.x << "|" << Vmin.y << std::endl; 
+                XnearAndUnconnected = SetIntersection(Xnew, Xunconn);                          // A2.5
+                std::cout << "Intersect(Xnear, Xunconn): " << XnearAndUnconnected.size() << std::endl;
                 Xnear = Near(XnearAndUnconnected, Vmin, rBitStar, kBitStar);                    // A2.5
+                std::cout << "Xnear Size: " << Xnear.size();
             }
             for (auto &i : Xnear) { 
                 gHat = fCalculateDist(i, start); i.gHat = gHat;                                 // A2.6
@@ -270,7 +291,7 @@ class BITSTAR{
             int counter = 0;
             xs = start.x; ys = start.y;         // am i rushing?
             xg = goal.x; yg = goal.y;
-            //std::cout << " X|Y|C" << std::endl;
+            std::cout << " X|Y|C" << std::endl;
             while (counter < m) {
 
                 xRand = (float(rand()) / float(RAND_MAX))*xMax;     // trims the samples to the boundary
@@ -285,7 +306,7 @@ class BITSTAR{
                     sampledStates.push_back(stateToAdd);
                     counter++;      // only increment the counter if the sample was valid
                 
-                    //std::cout << stateToAdd.x << " | " << stateToAdd.y << " | " << tmpG+tmpH <<  std::endl;
+                    std::cout << stateToAdd.x << " | " << stateToAdd.y << " | " << tmpG+tmpH <<  std::endl;
                 }
             }; 
 
@@ -312,7 +333,7 @@ class BITSTAR{
             while (!NeighborQueue.empty() && neighborCounter < numberOfNeighbors) {
                 state TopState = NeighborQueue.top();
                 NeighborQueue.pop();
-                if (TopState.r < rggRadius && !b_VerticesAreEqual(TopState, vertexToCheck)) {
+                if (TopState.r < rggRadius && !b_VerticesAreEqual(TopState, vertexToCheck)) {// dont add if its the exact same state lol
                     NearestNeighbors.push_back(TopState);
                     neighborCounter++;
                 }
@@ -736,8 +757,10 @@ int main () {
     std::cout << std::endl;
     std::cout << "\tTEST WORKED IF 1 == " << test_works << std::endl;
     std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "BEGINNING BIT STAR OUTPUT (STAY ORGANIZED)" << std::endl;
     if (test_works) {
-        BS.BIT_STAR({2.1, 3.0f}, {9.0f, 9.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
+        BS.BIT_STAR({3.1f, 5.0f}, {9.0f, 9.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
     };
 
     // unit testing my stuff
