@@ -132,7 +132,7 @@ class BITSTAR{
             // REPEAT                                                                       // 6.0
             int whileTrueIterations = 0;
             //while (true) {
-            while (whileTrueIterations < 2) {
+            while (whileTrueIterations < 100) {
                 std::cout << "Qe.size() == " << Qe.size() << " Qv.size() == " << Qv.size() << std::endl;
                 if ((Qe.size() == 0) && (Qv.size() == 0)){                                      // 7.0
                     std::cout << "The part where I sample stuff " << std::endl;
@@ -212,6 +212,16 @@ class BITSTAR{
                                         std::cout << "line 22" << std::endl; 
                                     } else {
                                         std::cout << " line 25" << std::endl;
+                                        std::cout << "Xunconn.size() before: " << Xunconn.size() << std::endl;
+                                        removeStateFromSet(Xmin, Xunconn);                                              // 25.0 
+                                        std::cout << "Xunconn.size() after: " << Xunconn.size() << std::endl;
+                                        V.push_back(Xmin);                                                              // 26.0
+                                        Qv.push(Xmin);                                                                  // 27.0
+                                        Vunexpnd.push_back(Xmin);                                                       // 28.0
+                                        if (calculate_L2(Xmin.x, Xmin.y, goal.x, goal.y) < 0.25f){                      // 29.0
+                                            Vsoln.push_back(Xmin);                                                      // 30.0
+                                        };
+                                    E.push_back(currentEdge);                                                           // 31.0
                                     }
                                 }// 20.0
                             } // 19.0
@@ -422,11 +432,13 @@ class BITSTAR{
 
         bool b_VerticesAreEqual(const state& V1, const state& V2) {
             // input is two states: output is whether or not every member of their structure is equal
+            // i stopped checking on the heuristic information, because i wasn't releasing states from Xunconn
+            // which means that there are differences in them
             bool verticesAreEqual = ((V1.x == V2.x) && 
-                                    (V1.y == V2.y) &&
-                                    (V1.f == V2.f) &&
-                                    (V1.gT == V2.gT) &&
-                                    (V1.hHat == V2.hHat));
+                                    (V1.y == V2.y)); // &&
+                                    //(V1.f == V2.f) &&
+                                    //(V1.gT == V2.gT) &&
+                                    //(V1.hHat == V2.hHat));
             return verticesAreEqual; 
         };
         
@@ -457,7 +469,7 @@ class BITSTAR{
             int stateIdx = 0;
             for (auto &i : VectorList) {
                 // asdfadsf
-                std::cout << "in removeStateFromSet" << std::endl;
+                //std::cout << "in removeStateFromSet" << std::endl;
                 if (b_VerticesAreEqual(i, Vertex)){
                     VectorList.erase(VectorList.begin() + stateIdx);
                     return true;    // so we are hoping that multiple copies dont get in here
@@ -466,19 +478,20 @@ class BITSTAR{
             };
             return false;
         };
-        //bool removeStateFromEdgeSet(edge Edge, edgeVector& EdgeList) {
-        //    int stateIdx = 0;
-        //    for (auto &i : EdgeList) {
-        //        // asdfadsf
-        //        std::cout << "in removeStateFromSet" << std::endl;
-        //        if (b_VerticesAreEqual(i, Vertex)){
-        //            VectorList.erase(VectorList.begin() + stateIdx);
-        //            return true;    // so we are hoping that multiple copies dont get in here
-        //        }
-        //        stateIdx++; 
-        //    };
-        //    return false;
-        //};
+        bool removeStateFromEdgeSet(edge Edge, edgeVector& EdgeList) {
+            // excited so not going to test this. probably that's a mistake
+            int stateIdx = 0;
+            for (auto &i : EdgeList) {
+                // asdfadsf
+                //std::cout << "in removeStateFromSet" << std::endl;
+                if (b_EdgesAreEqual(i, Edge)){
+                    EdgeList.erase(EdgeList.begin() + stateIdx);
+                    return true;    // so we are hoping that multiple copies dont get in here
+                }
+                stateIdx++; 
+            };
+            return false;
+        };
         // I should write simple test functions as I go along
         void print_state_vector(std::vector<state> state_vector, std::string vector_name) {
             int i=0; 
