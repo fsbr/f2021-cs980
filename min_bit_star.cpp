@@ -192,13 +192,31 @@ class BITSTAR{
                     std::cout << " Xmin.hHat " << Xmin.hHat  << std::endl;
                     std::cout << " Xmin.gT " << Xmin.gT  << std::endl;
                     std::cout << "Edge Vector Size " << E.size() << std::endl;
-                    if (Vmin.gT + currentEdge.cHat + Xmin.hHat < ci) {        // 16.0
+                    if (Vmin.gT + currentEdge.cHat + Xmin.hHat < ci) {                                                  // 16.0
                         //if (Vmin.gT)
                         std::cout << "check the line 16 test" << std::endl;
                         // we need gT(xMin)
-                        Xmin.gT = calculateGT(Xmin, start, V, E);
+                        Xmin.gT = calculateGT(Xmin, start, V, E) + currentEdge.cHat;
                         std::cout << "gT(Xmin): " << Xmin.gT << std::endl;
-                    }
+                        if (Vmin.gT + currentEdge.cHat < Xmin.gT) {                                                     // 17.0
+                            std::cout << "check the line 17 test" << std::endl;
+                            std::cout << "computation of cEdge should begin here" << std::endl;
+                            // this eventually needs to be a things where you collision check the occupancy grid
+                            float cEdge = currentEdge.cHat; // only viable to get thru the algorithm                    // 18.0
+                            if (Vmin.gT + cEdge + Xmin.hHat < ci) {                                                     // 19.0
+                                std::cout << "gets pased the check of line 19" << std::endl;
+                                if (Vmin.gT + cEdge < Xmin.gT) {                                                        // 20.0
+                                    std::cout << "i am past the check of line 20 " << std::endl;
+                                    if (b_VertexIsIn(Xmin, V) ) {
+                                        // i have no idea if this will work!  
+                                        std::cout << "line 22" << std::endl; 
+                                    } else {
+                                        std::cout << " line 25" << std::endl;
+                                    }
+                                }// 20.0
+                            } // 19.0
+                        }  // 18.0
+                    } // 17.0
                     
                 } else {
                     // how to empty a queue                    
@@ -448,6 +466,19 @@ class BITSTAR{
             };
             return false;
         };
+        //bool removeStateFromEdgeSet(edge Edge, edgeVector& EdgeList) {
+        //    int stateIdx = 0;
+        //    for (auto &i : EdgeList) {
+        //        // asdfadsf
+        //        std::cout << "in removeStateFromSet" << std::endl;
+        //        if (b_VerticesAreEqual(i, Vertex)){
+        //            VectorList.erase(VectorList.begin() + stateIdx);
+        //            return true;    // so we are hoping that multiple copies dont get in here
+        //        }
+        //        stateIdx++; 
+        //    };
+        //    return false;
+        //};
         // I should write simple test functions as I go along
         void print_state_vector(std::vector<state> state_vector, std::string vector_name) {
             int i=0; 
@@ -464,10 +495,18 @@ class BITSTAR{
         //         stateVector: a list of the states in the current motion tree
         // effects: this function attempts to search the motion tree until the root is reached, 
         // page 111 of notebook 2 shows the tree that this wokrs on.
+
+        // since the gT(vmin) functions of the algorithm require me to apply the cost of the popped vertex
+        // and THEN traverse the tree, i think i need more exceptions.
         float gT = 0.0f; 
         bool stateFound = false;
         // this is hard for me to visualize, how to instruct the computer what to do. 
         state tmpSourceState;
+        // if the state is the start state return gT = 0.0; 
+        // on the first iteration, the tree xmin is not part of the tree, so it should be infinite
+        //if (b_VerticesAreEqual(stateOfInterest, start)){ 
+        //    return 0.0f;
+        //}
         while (!b_VerticesAreEqual(stateOfInterest, start)){         // hopefully stops my tree traversal when i hit the start state
             std::cout << "im in the while loops stuck for good" << std::endl;
             stateFound = false;                                // if no state is found while searching the edges, we need to return gT = INFINITY
