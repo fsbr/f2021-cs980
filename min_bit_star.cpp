@@ -139,11 +139,10 @@ class BITSTAR{
                     Xsampling = Sample(m, start, goal, ci) ;                                    // 9.0; 
                     Xnew = Xsampling;                                                           // 10.0 (need to union with reuse states when the time comes)
                     // i kind of like micromanaging data structures but also i hate it
-                     
-
-
-
-                    std::exit(0); // causes 120 bytes to be lost on exit
+                    Xunconn = Append(Xunconn, Xnew);                                            // 11.0
+                    std::cout << "how big is Xunconn: " << Xunconn.size() << std::endl;         // i think its suppose to be 51 
+                    EnqueueMotionTreeVertices(Qv, V);                                           //12.0
+                    //std::exit(0); // causes 120 bytes to be lost on exit
                     // 12.0 
                 };
                 while  ((Qv.size() > 0) &  (fV_BestQueueValue(Qv) <= fE_BestQueueValue(Qe)) ){   // 13.0
@@ -271,7 +270,7 @@ class BITSTAR{
             int counter = 0;
             xs = start.x; ys = start.y;         // am i rushing?
             xg = goal.x; yg = goal.y;
-            std::cout << " X|Y|C" << std::endl;
+            //std::cout << " X|Y|C" << std::endl;
             while (counter < m) {
 
                 xRand = (float(rand()) / float(RAND_MAX))*xMax;     // trims the samples to the boundary
@@ -286,7 +285,7 @@ class BITSTAR{
                     sampledStates.push_back(stateToAdd);
                     counter++;      // only increment the counter if the sample was valid
                 
-                    std::cout << stateToAdd.x << " | " << stateToAdd.y << " | " << tmpG+tmpH <<  std::endl;
+                    //std::cout << stateToAdd.x << " | " << stateToAdd.y << " | " << tmpG+tmpH <<  std::endl;
                 }
             }; 
 
@@ -452,6 +451,13 @@ class BITSTAR{
         };
         tmp1.insert(tmp1.end(), tmp2.begin(), tmp2.end());
         return tmp1;
+    };
+    void EnqueueMotionTreeVertices(vertexQueueType& Qv, stateVector& V){
+        // inputs: Vertex Queue Type
+        // effects: enqueues states from the motion tree onto the vertex queue
+        for (auto &i : V) {
+            Qv.push(i);
+        };
     };
 
     // UNIT TESTS OF EACH PART 
@@ -664,6 +670,23 @@ class BITSTAR{
         return false;
  
     };
+
+    bool bTest_EnqueueMotionTreeVertices(){
+        vertexQueueType Qv; stateVector V;
+        state s1, s2, s3, s4, s5;
+        s1.x = 1.0f; s1.y = 1.0; s1.f = 5.0f;
+        s2.x = 1.0f; s2.y = 2.0; s2.f = 4.0f;
+        s3.x = 3.0f; s3.y = 3.0; s3.f = 3.0f;
+        s4.x = 4.0f; s4.y = 4.0; s4.f = 2.0f; 
+        s5.x = 5.0f; s5.y = 5.0; s5.f = 1.0f;
+        V.push_back(s1); V.push_back(s2); V.push_back(s3); V.push_back(s4); V.push_back(s5); 
+        std::cout << "s5.f: :" << s5.f << std::endl;
+        EnqueueMotionTreeVertices(Qv, V);
+        float bqv = fV_BestQueueValue(Qv);
+        std::cout << "best queue value: " << bqv << std::endl;
+        if (fV_BestQueueValue(Qv) == 1.0f) return true;
+        return false;
+    };
     bool unit_test() {
         bool bqvv_works = bTest_fV_BestQueueValue();
         bool bqve_works = bTest_fE_BestQueueValue();
@@ -675,6 +698,7 @@ class BITSTAR{
         bool tree_traversal_works = bTest_calculateGT();
         bool sampling_works = bTest_Sample();
         bool appending_works = bTest_Append();
+        bool testEMTV = bTest_EnqueueMotionTreeVertices();
 
         std::cout << std::endl;
         std::cout << "UNIT TEST RESULTS: " << std::endl;
@@ -688,11 +712,13 @@ class BITSTAR{
         std::cout << "\tState Removal From V Vector: " << state_V_removal_works << std::endl;
         std::cout << "\tTree Traversal Works: " << tree_traversal_works << std::endl;
         std::cout << "\tAppending Works: " << appending_works << std::endl;
+        std::cout << "\tVertex Queue Enqueing: " << testEMTV << std::endl;
         
         return bqvv_works && bqve_works && 
                bvae_works && near_works && sint_works && 
                edge_equal_works && state_V_removal_works &&
-               tree_traversal_works && appending_works;
+               tree_traversal_works && appending_works &&
+               testEMTV;
     };
 //// BIT STARS ENDING BRACE DO NOT TOUCH
 };///DONT TOUCH
