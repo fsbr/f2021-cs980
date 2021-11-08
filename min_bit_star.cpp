@@ -184,13 +184,20 @@ class BITSTAR{
                     if (!b_VerticesAreEqual(Vmin, start)){
                         std::cout << "Shouldn't see this on the first iteration" << std::endl;
                         Vmin.gT = calculateGT(Vmin, start, V, E);
+                    } else {
+                        // i wonder if i need this to get the first iteration?
+                        Xmin.gT = currentEdge.cHat; 
                     };
                     std::cout << "Vmin.gT " << Vmin.gT << " cHat " << currentEdge.cHat;
                     std::cout << " Xmin.hHat " << Xmin.hHat  << std::endl;
                     std::cout << " Xmin.gT " << Xmin.gT  << std::endl;
+                    std::cout << "Edge Vector Size " << E.size() << std::endl;
                     if (Vmin.gT + currentEdge.cHat + Xmin.hHat < ci) {        // 16.0
                         //if (Vmin.gT)
                         std::cout << "check the line 16 test" << std::endl;
+                        // we need gT(xMin)
+                        Xmin.gT = calculateGT(Xmin, start, V, E);
+                        std::cout << "gT(Xmin): " << Xmin.gT << std::endl;
                     }
                     
                 } else {
@@ -472,7 +479,9 @@ class BITSTAR{
                     stateOfInterest = i.source_state;
                 }; 
             };
-            if (!stateFound) return INFINITY;                       // need this for if hte tree isnt connected
+            if (!stateFound) {                         // the state wasn't found in the edge List
+                return INFINITY;                       // need this for if hte tree isnt connected
+            }
         }
        return gT;
     };
