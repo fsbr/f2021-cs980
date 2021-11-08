@@ -26,7 +26,7 @@ class BITSTAR{
 
         // RGG Parameters
         int kBitStar = 10; 
-        float rBitStar = 3.0f;
+        float rBitStar = 9.0f;
 
         // Calculate L2 Norm
         float calculate_L2(float x1, float y1, float x2, float y2){
@@ -44,7 +44,7 @@ class BITSTAR{
             float r = INFINITY;                // distance for nearest neighbor search 
             // associated heuristic information goes here?
         };
-        struct edge {
+        struct edge {                           // really hope these dont need to be changed to references to work lmao
             state source_state;
             state target_state; 
             float f = INFINITY;
@@ -131,8 +131,8 @@ class BITSTAR{
             
             // REPEAT                                                                       // 6.0
             int whileTrueIterations = 0;
-            //while (true) {
-            while (whileTrueIterations < 100) {
+            while (true) {
+            //while (whileTrueIterations < 100) {
                 std::cout << "Qe.size() == " << Qe.size() << " Qv.size() == " << Qv.size() << std::endl;
                 if ((Qe.size() == 0) && (Qv.size() == 0)){                                      // 7.0
                     std::cout << "The part where I sample stuff " << std::endl;
@@ -200,10 +200,14 @@ class BITSTAR{
                         // we need gT(xMin)
                         Xmin.gT = calculateGT(Xmin, start, V, E) + currentEdge.cHat;
                         std::cout << "gT(Xmin): " << Xmin.gT << std::endl;
+                
+                        // because Xmin.gT is always evaluating to inf, this is always the truth
                         if (Vmin.gT + currentEdge.cHat < Xmin.gT) {                                                     // 17.0
                             std::cout << "check the line 17 test" << std::endl;
                             std::cout << "computation of cEdge should begin here" << std::endl;
-                            // this eventually needs to be a things where you collision check the occupancy grid
+
+                            // SUPER SCARY COLLISION CHECKING PART 
+                            // NEED TO IMPLEMENT THIS VS THE OCCUPANCY GRID
                             float cEdge = currentEdge.cHat; // only viable to get thru the algorithm                    // 18.0
                             if (Vmin.gT + cEdge + Xmin.hHat < ci) {                                                     // 19.0
                                 std::cout << "gets pased the check of line 19" << std::endl;
@@ -224,9 +228,13 @@ class BITSTAR{
                                         Qv.push(Xmin);                                                                  // 27.0
                                         std::cout << "after: Qv.size(): " << Qv.size() << std::endl; 
                                         Vunexpnd.push_back(Xmin);                                                       // 28.0
+
                                         if (calculate_L2(Xmin.x, Xmin.y, goal.x, goal.y) < 0.25f){                      // 29.0
                                             Vsoln.push_back(Xmin);                                                      // 30.0
+                                            std::exit(0);                                                               
                                         };
+                                    // put on the vertex 
+                                    currentEdge.target_state.gT = Vmin.gT + currentEdge.cHat; 
                                     E.push_back(currentEdge);                                                           // 31.0
                                     }
                                 }// 20.0
@@ -244,7 +252,7 @@ class BITSTAR{
                 
                 //std::cout << "diagnostic message to let you know i am stuck in this while loop" <<std::endl;
                 //std::cout << " how big is my edge queue " << Qe.size() << std::endl;
-            //std::exit(0); // we just want to run BIT* once
+                //std::exit(0); // we just want to run BIT* once
                 whileTrueIterations++;
             };//UNTIL STOP;
             // RETURN T;
