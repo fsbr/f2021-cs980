@@ -176,8 +176,23 @@ class BITSTAR{
                     std::cout << "target state: ";
                     std::cout << currentEdge.target_state.x << " " << currentEdge.target_state.y << std::endl;
 
-                    // We need GT Several Times here
+                    state Vmin = currentEdge.source_state; 
+                    state Xmin = currentEdge.target_state;
 
+                    // We need GT Several Times here
+                    std::cout << "Attempting to get GT, cHat: " << std::endl;
+                    if (!b_VerticesAreEqual(Vmin, start)){
+                        std::cout << "Shouldn't see this on the first iteration" << std::endl;
+                        Vmin.gT = calculateGT(Vmin, start, V, E);
+                    };
+                    std::cout << "Vmin.gT " << Vmin.gT << " cHat " << currentEdge.cHat;
+                    std::cout << " Xmin.hHat " << Xmin.hHat  << std::endl;
+                    std::cout << " Xmin.gT " << Xmin.gT  << std::endl;
+                    if (Vmin.gT + currentEdge.cHat + Xmin.hHat < ci) {        // 16.0
+                        //if (Vmin.gT)
+                        std::cout << "check the line 16 test" << std::endl;
+                    }
+                    
                 } else {
                     // how to empty a queue                    
                     clearQueue(Qe); clearQueue(Qv);                                                                     // 34.0
@@ -760,7 +775,7 @@ int main () {
     std::cout << std::endl;
     std::cout << "BEGINNING BIT STAR OUTPUT (STAY ORGANIZED)" << std::endl;
     if (test_works) {
-        BS.BIT_STAR({3.1f, 5.0f}, {9.0f, 9.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
+        BS.BIT_STAR({1.1f, 3.0f}, {9.0f, 9.0f}); // start (x,y) = (1.1, 3.0), goal (9,9)
     };
 
     // unit testing my stuff
