@@ -188,10 +188,12 @@ class BITSTAR{
                         // i wonder if i need this to get the first iteration?
                         Xmin.gT = currentEdge.cHat; 
                     };
+
                     std::cout << "Vmin.gT " << Vmin.gT << " cHat " << currentEdge.cHat;
                     std::cout << " Xmin.hHat " << Xmin.hHat  << std::endl;
                     std::cout << " Xmin.gT " << Xmin.gT  << std::endl;
                     std::cout << "Edge Vector Size " << E.size() << std::endl;
+
                     if (Vmin.gT + currentEdge.cHat + Xmin.hHat < ci) {                                                  // 16.0
                         //if (Vmin.gT)
                         std::cout << "check the line 16 test" << std::endl;
@@ -216,7 +218,11 @@ class BITSTAR{
                                         removeStateFromSet(Xmin, Xunconn);                                              // 25.0 
                                         std::cout << "Xunconn.size() after: " << Xunconn.size() << std::endl;
                                         V.push_back(Xmin);                                                              // 26.0
+
+                                        std::cout << "putting Xmin onto the Vertex Queue: " << std::endl;
+                                        std::cout << "before: Qv.size(): " << Qv.size() << std::endl; 
                                         Qv.push(Xmin);                                                                  // 27.0
+                                        std::cout << "after: Qv.size(): " << Qv.size() << std::endl; 
                                         Vunexpnd.push_back(Xmin);                                                       // 28.0
                                         if (calculate_L2(Xmin.x, Xmin.y, goal.x, goal.y) < 0.25f){                      // 29.0
                                             Vsoln.push_back(Xmin);                                                      // 30.0
