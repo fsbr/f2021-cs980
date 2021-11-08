@@ -21,6 +21,9 @@ class BITSTAR{
         float xMax = 10.0f; 
         float yMax = 10.0f; 
 
+        // Sampling Parameters
+        int m = 50;             // number of samples
+
         // RGG Parameters
         int kBitStar = 10; 
         float rBitStar = 3.0f;
@@ -132,9 +135,11 @@ class BITSTAR{
                 if ((Qe.size() == 0) && (Qv.size() == 0)){                                      // 7.0
                     std::cout << "The part where I sample stuff " << std::endl;
                     // we are going to write the pruning function last i think
-                    //Xsamping = Sample() ;
-
-
+                    // Xreuse = Prune()                                                         // 8.0 (not implemented yet)
+                    Xsampling = Sample(m, start, goal, ci) ;                                    // 9.0; 
+                    Xnew = Xsampling;                                                           // 10.0 (need to union with reuse states when the time comes)
+                    // i kind of like micromanaging data structures but also i hate it
+                     
 
 
 
@@ -252,6 +257,10 @@ class BITSTAR{
             return commonStates;
         };
         stateVector Sample(int m, state start, state goal,  float ci){
+            // inputs m: int: how many samples
+            // state start: start, state goal: goal state
+            // float ci: the cost of the informative region, calculated by l2(goal, rand) + l2(start,rand)
+            // can softlock if the cost ci is too low
             stateVector sampledStates;
             // sample states and if they are within 
             float xRand;
@@ -262,6 +271,7 @@ class BITSTAR{
             int counter = 0;
             xs = start.x; ys = start.y;         // am i rushing?
             xg = goal.x; yg = goal.y;
+            std::cout << " X|Y|C" << std::endl;
             while (counter < m) {
 
                 xRand = (float(rand()) / float(RAND_MAX))*xMax;     // trims the samples to the boundary
@@ -275,6 +285,8 @@ class BITSTAR{
                     stateToAdd.x = xRand; stateToAdd.y = yRand;
                     sampledStates.push_back(stateToAdd);
                     counter++;      // only increment the counter if the sample was valid
+                
+                    std::cout << stateToAdd.x << " | " << stateToAdd.y << " | " << tmpG+tmpH <<  std::endl;
                 }
             }; 
 
@@ -428,6 +440,18 @@ class BITSTAR{
             if (!stateFound) return INFINITY;                       // need this for if hte tree isnt connected
         }
        return gT;
+    };
+
+    stateVector Append(stateVector V1, stateVector V2){
+        stateVector tmp1, tmp2;
+        if (V1.size() > V2.size() ) {
+            tmp1 = V1; tmp2 = V2;
+        }
+        else {
+            tmp1 = V2; tmp2 = V1; 
+        };
+        tmp1.insert(tmp1.end(), tmp2.begin(), tmp2.end());
+        return tmp1;
     };
 
     // UNIT TESTS OF EACH PART 
@@ -612,6 +636,33 @@ class BITSTAR{
     
     bool bTest_Sample() {
         // not sure how I'm going to be able to do this one
+
+        state start; state goal;
+        start.x = 1.0; start.y = 1.0;
+        goal.x = 8.0; goal.y = 8.0;
+        int m = 50;
+        float ci = 12.0f;
+        Sample(50, start, goal, ci);
+        return true; 
+    };
+
+    bool bTest_Append() {
+        stateVector Vec1, Vec2; 
+        stateVector resultVector;
+        state s1, s2, s3, s4, s5;
+        s1.x = 1.0f; s1.y = 1.0;
+        s2.x = 1.0f; s2.y = 2.0;
+        s3.x = 3.0f; s3.y = 3.0;
+        s4.x = 4.0f; s4.y = 4.0;
+        s5.x = 5.0f; s5.y = 5.0; 
+        Vec1.push_back(s1); Vec1.push_back(s2);
+        Vec2.push_back(s3); Vec2.push_back(s4);
+        Vec2.push_back(s5); 
+        
+        resultVector = Append(Vec1, Vec2);
+        if (resultVector.size() == 5) return true;
+        return false;
+ 
     };
     bool unit_test() {
         bool bqvv_works = bTest_fV_BestQueueValue();
@@ -622,6 +673,8 @@ class BITSTAR{
         bool edge_equal_works = bTest_b_EdgesAreEqual();
         bool state_V_removal_works = bTest_removeStateFromSet();
         bool tree_traversal_works = bTest_calculateGT();
+        bool sampling_works = bTest_Sample();
+        bool appending_works = bTest_Append();
 
         std::cout << std::endl;
         std::cout << "UNIT TEST RESULTS: " << std::endl;
@@ -634,11 +687,12 @@ class BITSTAR{
         std::cout << "\tEdge Equality: " << edge_equal_works << std::endl;
         std::cout << "\tState Removal From V Vector: " << state_V_removal_works << std::endl;
         std::cout << "\tTree Traversal Works: " << tree_traversal_works << std::endl;
+        std::cout << "\tAppending Works: " << appending_works << std::endl;
         
         return bqvv_works && bqve_works && 
                bvae_works && near_works && sint_works && 
                edge_equal_works && state_V_removal_works &&
-               tree_traversal_works;
+               tree_traversal_works && appending_works;
     };
 //// BIT STARS ENDING BRACE DO NOT TOUCH
 };///DONT TOUCH
